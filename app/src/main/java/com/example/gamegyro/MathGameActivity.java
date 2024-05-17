@@ -13,6 +13,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
@@ -25,11 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class MainActivity extends Activity {
-
+public class MathGameActivity extends Activity {
     private SensorManager sensorManager;
     private Sensor gyroSensor;
     private ImageView movableObject;
@@ -42,17 +40,14 @@ public class MainActivity extends Activity {
     private Random random = new Random();
     private int screenWidth;
     private int screenHeight;
-    private int lives = 3;
-    private TextView livesText;
-    private int timeLeft = 45;
-    private TextView timerText;
+    private TextView equationText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.mathgame);
 
-        gameContainer = findViewById(R.id.game_container);
+        gameContainer = findViewById(R.id.game_math_container);
         movableObject = findViewById(R.id.movable_object);
         scoreText = findViewById(R.id.score_text);
 
@@ -64,64 +59,28 @@ public class MainActivity extends Activity {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         gyroSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        livesText = findViewById(R.id.lives_text);
-        updateLives();
-        timerText = findViewById(R.id.timer_text);
-        startTimer();
-
         if (gyroSensor == null) {
             Toast.makeText(this, "Gyroscope sensor not available", Toast.LENGTH_SHORT).show();
             finish();
         }
         startGame();
     }
-    private void updateLives() {
-        if (!isGameOver) {
-            livesText.setText("Lives: " + lives);
-        }
-    }
     private void updateScore() {
         if (!isGameOver) {
             scoreText.setText("Score: " + score);
         }
     }
-    private void startTimer() {
-        final Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!isGameOver) {
-                            timeLeft--;
-                            timerText.setText("Time: " + timeLeft + "s");
-                            if (timeLeft <= 0) {
-                                isGameOver = true;
-                                timer.cancel();
-                                gameHandler.removeCallbacks(gameLoop);
-                                showGameOverDialog();
-                            }
-                        }
-                    }
-                });
-            }
-        }, 0, 1000);
+
+    private void displayNewEquation(String equation) {
+        if(equationText == null) equationText = findViewById(R.id.equation_text);
+        equationText.setText(equation);
     }
 
-    private void displayTargetColor(int color) {
-        TextView targetColorDisplay = findViewById(R.id.target_color_display);
-        targetColorDisplay.setBackgroundColor(color);
-        targetColorDisplay.setText("Match This Color");
-    }
-
-    private int targetColor;
     private void startGame() {
         isGameOver = false;
         score = 0;
-        targetColor = getRandomColor();
+        generateEquation();
         updateScore();
-        displayTargetColor(targetColor);
         gameHandler.postDelayed(gameLoop, 500);
     }
     private final SensorEventListener gyroListener = new SensorEventListener() {
@@ -164,41 +123,42 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    private int currentAnswer;
+
+    private void generateEquation() {
+        int a = random.nextInt(10);
+        int b = random.nextInt(10);
+        currentAnswer = a + b;
+        String equation = a + " + " + b + " = ?";
+        displayNewEquation(equation);
+    }
     private void spawnFallingObject() {
-        ImageView newObject = new ImageView(this);
-        newObject.setLayoutParams(new RelativeLayout.LayoutParams(
+        TextView newNumber = new TextView(this);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT));
-        newObject.setImageResource(R.drawable.circle_shape);
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        newNumber.setLayoutParams(params);
+        newNumber.setBackgroundResource(R.drawable.circle_shape);
+        int numberToShow = random.nextBoolean() ? currentAnswer : random.nextInt(20);
+        newNumber.setText(String.valueOf(numberToShow));
+        newNumber.setGravity(Gravity.CENTER);
+        newNumber.setTag(numberToShow);
+        gameContainer.addView(newNumber);
 
-        int objectColor = getRandomColor();
-        newObject.setColorFilter(objectColor, PorterDuff.Mode.SRC_IN);
-        gameContainer.addView(newObject);
-
-        objectColors.put(newObject, objectColor);
-
-        newObject.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        newNumber.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                newObject.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                int objectWidth = newObject.getWidth();
-                newObject.setX(random.nextInt(screenWidth - objectWidth));
-                newObject.setY(0);
-                fallingObjects.add(newObject);
+                newNumber.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                int objectWidth = newNumber.getWidth();
+                newNumber.setX(random.nextInt(screenWidth - objectWidth));
+                newNumber.setY(0);
+                fallingObjects.add(newNumber);
             }
         });
     }
-    private int getRandomColor() {
-        int[] colors = {
-                Color.RED,
-                Color.GREEN,
-                Color.BLUE,
-                Color.YELLOW,
-                Color.CYAN,
-                Color.MAGENTA
-        };
-        return colors[random.nextInt(colors.length)];
-    }
+
     private void moveFallingObjects() {
         List<View> toRemove = new ArrayList<>();
         for (View obj : fallingObjects) {
@@ -215,7 +175,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private Map<View, Integer> objectColors = new HashMap<>();
     private void checkCollision() {
         int playerRadius = movableObject.getWidth() / 2;
         int playerCenterX = (int) movableObject.getX() + playerRadius;
@@ -230,21 +189,16 @@ public class MainActivity extends Activity {
             double distance = Math.sqrt(Math.pow(playerCenterX - objectCenterX, 2) + Math.pow(playerCenterY - objectCenterY, 2));
 
             if (distance < playerRadius + objectRadius) {
-                Integer objectColor = objectColors.get(obj);
-                if (objectColor != null && objectColor.equals(targetColor)){
+                int number = (Integer) obj.getTag();
+                if (number == currentAnswer){
                     score+=20;
                     updateScore();
-                    targetColor = getRandomColor();
-                    displayTargetColor(targetColor);
+                    generateEquation();
                 }
                 else{
-                    lives--;
-                    updateLives();
-                    if(lives<=0){
-                        isGameOver = true;
-                        gameHandler.removeCallbacks(gameLoop);
-                        showGameOverDialog();
-                    }
+                    isGameOver = true;
+                    gameHandler.removeCallbacks(gameLoop);
+                    showGameOverDialog();
                 }
                 toRemove.add(obj);
             }
@@ -252,7 +206,6 @@ public class MainActivity extends Activity {
         for (View obj : toRemove) {
             gameContainer.removeView(obj);
             fallingObjects.remove(obj);
-            objectColors.remove(obj);
         }
     }
 
@@ -274,7 +227,7 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Play Again", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(MainActivity.this, GameModeSelectionActivity.class);
+                        Intent intent = new Intent(MathGameActivity.this, GameModeSelectionActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         startActivity(intent);
                         finish();
@@ -283,5 +236,14 @@ public class MainActivity extends Activity {
                 .setCancelable(false);
         builder.show();
     }
+    private void resetGame() {
+        score = 0;
+        updateScore();
+        isGameOver = false;
+        fallingObjects.clear();
+        gameContainer.removeAllViewsInLayout();
+        gameContainer.addView(movableObject);
+        gameContainer.addView(scoreText);
+        startGame();
+    }
 }
-

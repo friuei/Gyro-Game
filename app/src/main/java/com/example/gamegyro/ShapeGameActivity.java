@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -25,10 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class MainActivity extends Activity {
+public class ShapeGameActivity extends Activity {
 
     private SensorManager sensorManager;
     private Sensor gyroSensor;
@@ -42,19 +38,15 @@ public class MainActivity extends Activity {
     private Random random = new Random();
     private int screenWidth;
     private int screenHeight;
-    private int lives = 3;
-    private TextView livesText;
-    private int timeLeft = 45;
-    private TextView timerText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.shapegame);
 
-        gameContainer = findViewById(R.id.game_container);
-        movableObject = findViewById(R.id.movable_object);
-        scoreText = findViewById(R.id.score_text);
+        gameContainer = findViewById(R.id.shape_game_container);
+        movableObject = findViewById(R.id.movable1_object);
+        scoreText = findViewById(R.id.score1_text);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -64,64 +56,31 @@ public class MainActivity extends Activity {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         gyroSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        livesText = findViewById(R.id.lives_text);
-        updateLives();
-        timerText = findViewById(R.id.timer_text);
-        startTimer();
-
         if (gyroSensor == null) {
             Toast.makeText(this, "Gyroscope sensor not available", Toast.LENGTH_SHORT).show();
             finish();
         }
         startGame();
     }
-    private void updateLives() {
-        if (!isGameOver) {
-            livesText.setText("Lives: " + lives);
-        }
-    }
     private void updateScore() {
         if (!isGameOver) {
             scoreText.setText("Score: " + score);
         }
     }
-    private void startTimer() {
-        final Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!isGameOver) {
-                            timeLeft--;
-                            timerText.setText("Time: " + timeLeft + "s");
-                            if (timeLeft <= 0) {
-                                isGameOver = true;
-                                timer.cancel();
-                                gameHandler.removeCallbacks(gameLoop);
-                                showGameOverDialog();
-                            }
-                        }
-                    }
-                });
-            }
-        }, 0, 1000);
+
+    private void displayTargetShape(int shape) {
+        ImageView targetShapeDisplay = findViewById(R.id.target_shape_display);
+        targetShapeDisplay.setImageDrawable(null);
+        targetShapeDisplay.setImageResource(shape);
     }
 
-    private void displayTargetColor(int color) {
-        TextView targetColorDisplay = findViewById(R.id.target_color_display);
-        targetColorDisplay.setBackgroundColor(color);
-        targetColorDisplay.setText("Match This Color");
-    }
-
-    private int targetColor;
+    private int targetShape;
     private void startGame() {
         isGameOver = false;
         score = 0;
-        targetColor = getRandomColor();
+        targetShape = getRandomShape();
         updateScore();
-        displayTargetColor(targetColor);
+        displayTargetShape(targetShape);
         gameHandler.postDelayed(gameLoop, 500);
     }
     private final SensorEventListener gyroListener = new SensorEventListener() {
@@ -169,13 +128,12 @@ public class MainActivity extends Activity {
         newObject.setLayoutParams(new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT));
-        newObject.setImageResource(R.drawable.circle_shape);
 
-        int objectColor = getRandomColor();
-        newObject.setColorFilter(objectColor, PorterDuff.Mode.SRC_IN);
+        int objectShape = getRandomShape();
+        newObject.setImageResource(objectShape);
         gameContainer.addView(newObject);
 
-        objectColors.put(newObject, objectColor);
+        objectShapes.put(newObject, objectShape);
 
         newObject.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -188,16 +146,15 @@ public class MainActivity extends Activity {
             }
         });
     }
-    private int getRandomColor() {
-        int[] colors = {
-                Color.RED,
-                Color.GREEN,
-                Color.BLUE,
-                Color.YELLOW,
-                Color.CYAN,
-                Color.MAGENTA
+    private int getRandomShape() {
+        int[] shapes = {
+                R.drawable.circle_shape,
+                R.drawable.rectangle_shape,
+                R.drawable.rect_shape,
+                R.drawable.rect1_shape,
+                R.drawable.rect2_shape
         };
-        return colors[random.nextInt(colors.length)];
+        return shapes[random.nextInt(shapes.length)];
     }
     private void moveFallingObjects() {
         List<View> toRemove = new ArrayList<>();
@@ -215,7 +172,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private Map<View, Integer> objectColors = new HashMap<>();
+    private Map<View, Integer> objectShapes = new HashMap<>();
     private void checkCollision() {
         int playerRadius = movableObject.getWidth() / 2;
         int playerCenterX = (int) movableObject.getX() + playerRadius;
@@ -230,21 +187,17 @@ public class MainActivity extends Activity {
             double distance = Math.sqrt(Math.pow(playerCenterX - objectCenterX, 2) + Math.pow(playerCenterY - objectCenterY, 2));
 
             if (distance < playerRadius + objectRadius) {
-                Integer objectColor = objectColors.get(obj);
-                if (objectColor != null && objectColor.equals(targetColor)){
+                Integer objectShape = objectShapes.get(obj);
+                if (objectShape != null && objectShape.equals(targetShape)){
                     score+=20;
                     updateScore();
-                    targetColor = getRandomColor();
-                    displayTargetColor(targetColor);
+                    targetShape = getRandomShape();
+                    displayTargetShape(targetShape);
                 }
                 else{
-                    lives--;
-                    updateLives();
-                    if(lives<=0){
-                        isGameOver = true;
-                        gameHandler.removeCallbacks(gameLoop);
-                        showGameOverDialog();
-                    }
+                    isGameOver = true;
+                    gameHandler.removeCallbacks(gameLoop);
+                    showGameOverDialog();
                 }
                 toRemove.add(obj);
             }
@@ -252,7 +205,7 @@ public class MainActivity extends Activity {
         for (View obj : toRemove) {
             gameContainer.removeView(obj);
             fallingObjects.remove(obj);
-            objectColors.remove(obj);
+            objectShapes.remove(obj);
         }
     }
 
@@ -274,7 +227,7 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Play Again", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(MainActivity.this, GameModeSelectionActivity.class);
+                        Intent intent = new Intent(ShapeGameActivity.this, GameModeSelectionActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         startActivity(intent);
                         finish();

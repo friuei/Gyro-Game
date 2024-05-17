@@ -3,7 +3,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/game_container">
-        <ImageView
+    <TextView
+        android:id="@+id/lives_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lives: 3"
+        android:textSize="18sp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:id="@+id/timer_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Time: 45s"
+        android:textSize="18sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp" />
+
+    <ImageView
             android:id="@+id/movable_object"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -18,5 +39,13 @@
             android:layout_centerHorizontal="true"
             android:text="Score: 0"
             android:textSize="24sp"/>
-    </RelativeLayout>
+        <TextView
+            android:id="@+id/target_color_display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Match This Color"
+            android:background="@android:color/darker_gray"
+            android:textColor="@android:color/black"
+            android:padding="8dp" />
+</RelativeLayout>
 

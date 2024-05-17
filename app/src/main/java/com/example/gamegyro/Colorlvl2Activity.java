@@ -28,7 +28,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends Activity {
+public class Colorlvl2Activity extends Activity {
 
     private SensorManager sensorManager;
     private Sensor gyroSensor;
@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
     private int screenHeight;
     private int lives = 3;
     private TextView livesText;
-    private int timeLeft = 45;
+    private int timeLeft = 40;
     private TextView timerText;
 
     @Override
@@ -202,7 +202,7 @@ public class MainActivity extends Activity {
     private void moveFallingObjects() {
         List<View> toRemove = new ArrayList<>();
         for (View obj : fallingObjects) {
-            float newY = obj.getY() + 50;
+            float newY = obj.getY() + 100;
             if (newY > screenHeight) {
                 toRemove.add(obj);
             } else {
@@ -274,7 +274,7 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Play Again", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(MainActivity.this, GameModeSelectionActivity.class);
+                        Intent intent = new Intent(Colorlvl2Activity.this, GameModeSelectionActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         startActivity(intent);
                         finish();

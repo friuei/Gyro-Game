@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/shape_game_container">
+    <ImageView
+        android:id="@+id/movable1_object"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/rectangle_shape"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
+    <TextView
+        android:id="@+id/score1_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="Score: 0"
+        android:textSize="24sp"/>
+
+    <ImageView
+        android:id="@+id/target_shape_display"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:padding="8dp"
+        android:contentDescription="TODO"/>
+
+</RelativeLayout>
